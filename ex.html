@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Android USB Camera Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #fafafa; }
+    h1 { font-size: 1.2rem; }
+    select, button { padding: 6px; font-size: 1rem; margin: 8px 0; }
+    video { width: 100%; max-width: 480px; height: auto; border: 1px solid #ccc; margin-top: 10px; }
+    #devices { font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Android USB Camera Access Test</h1>
+  <p>
+    1️⃣ Connect your USB camera (via OTG)<br>
+    2️⃣ Tap “List Cameras” → select camera → “Start Stream”
+  </p>
+
+  <button id="listBtn">List Cameras</button><br>
+  <select id="cameraSelect"></select>
+  <button id="startBtn">Start Stream</button>
+
+  <video id="video" autoplay playsinline></video>
+
+  <h2>Detected Devices:</h2>
+  <div id="devices">(none yet)</div>
+
+  <script>
+    const videoEl = document.getElementById('video');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const devicesDiv = document.getElementById('devices');
+
+    async function listDevices() {
+      try {
+        // Request permission first
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        devicesDiv.textContent = JSON.stringify(devices, null, 2);
+
+        const cameras = devices.filter(d => d.kind === 'videoinput');
+        cameraSelect.innerHTML = '';
+        cameras.forEach(cam => {
+          const opt = document.createElement('option');
+          opt.value = cam.deviceId;
+          opt.textContent = cam.label || `Camera ${cameraSelect.length + 1}`;
+          cameraSelect.appendChild(opt);
+        });
+
+        if (!cameras.length) alert('No video inputs detected. Try reconnecting USB camera.');
+      } catch (err) {
+        alert('Error: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    async function startStream() {
+      const deviceId = cameraSelect.value;
+      if (!deviceId) return alert('Select a camera first');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: { exact: deviceId } },
+          audio: false
+        });
+        videoEl.srcObject = stream;
+      } catch (err) {
+        alert('Could not start video: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    document.getElementById('listBtn').onclick = listDevices;
+    document.getElementById('startBtn').onclick = startStream;
+  </script>
+</body>
+</html>
