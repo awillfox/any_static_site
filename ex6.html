@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gamepad Tester</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: monospace; background: #1a1a2e; color: #eee; padding: 20px; display: flex; gap: 20px; }
+    #left { flex: 1; }
+    #right { width: 200px; }
+    h1 { margin-bottom: 10px; }
+    #status { color: #888; margin-bottom: 20px; }
+    .gamepad { background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .gamepad h2 { margin-bottom: 10px; color: #e94560; }
+    .info { color: #888; margin-bottom: 15px; font-size: 14px; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .btn { padding: 8px 16px; border-radius: 4px; background: #0f3460; font-family: monospace; font-size: 14px; min-width: 50px; text-align: center; }
+    .btn.pressed { background: #e94560; color: #fff; }
+    .axes { display: flex; flex-wrap: wrap; gap: 15px; }
+    .axis { background: #0f3460; border-radius: 4px; padding: 10px 15px; font-size: 14px; }
+    .axis .value { color: #53d8fb; }
+    #fishbox { background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 20px; text-align: center; font-size: 28px; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div id="left">
+    <h1>Gamepad Tester</h1>
+    <div id="status">Press a button on your controller to connect...</div>
+    <div id="gamepads"></div>
+  </div>
+  <div id="right">
+    <div id="fishbox">--</div>
+  </div>
+
+  <script>
+    const gamepads = {};
+    const container = document.getElementById('gamepads');
+    const status = document.getElementById('status');
+    const fishbox = document.getElementById('fishbox');
+
+    const XBOX_BUTTON_NAMES = [
+      'A', 'B', 'X', 'Y',
+      'LB', 'RB', 'LT', 'RT',
+      'Back', 'Start',
+      'LS', 'RS',
+      'Up', 'Down', 'Left', 'Right',
+      'Home'
+    ];
+
+    const AXIS_NAMES = ['Left X', 'Left Y', 'Right X', 'Right Y'];
+
+    window.addEventListener('gamepadconnected', (e) => {
+      gamepads[e.gamepad.index] = true;
+      status.textContent = Object.keys(gamepads).length + ' controller(s) connected';
+    });
+
+    window.addEventListener('gamepaddisconnected', (e) => {
+      delete gamepads[e.gamepad.index];
+      const count = Object.keys(gamepads).length;
+      status.textContent = count ? count + ' controller(s) connected' : 'Press a button on your controller to connect...';
+    });
+
+    function render() {
+      const pads = navigator.getGamepads();
+      let html = '';
+      let fish = '--';
+
+      for (const gp of pads) {
+        if (!gp) continue;
+
+        html += '<div class="gamepad">';
+        html += '<h2>Controller ' + gp.index + ': ' + gp.id + '</h2>';
+        html += '<div class="info">Buttons: ' + gp.buttons.length + ' | Axes: ' + gp.axes.length + '</div>';
+
+        html += '<div class="buttons">';
+        for (let i = 0; i < gp.buttons.length; i++) {
+          const label = XBOX_BUTTON_NAMES[i] || i;
+          const pressed = gp.buttons[i].pressed;
+          const val = gp.buttons[i].value;
+          let display = label;
+          if (val > 0 && val < 1) display += ' ' + val.toFixed(2);
+          html += '<div class="btn' + (pressed ? ' pressed' : '') + '">' + display + '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="axes">';
+        for (let i = 0; i < gp.axes.length; i++) {
+          const label = AXIS_NAMES[i] || 'Axis ' + i;
+          html += '<div class="axis">' + label + ': <span class="value">' + gp.axes[i].toFixed(4) + '</span></div>';
+        }
+        html += '</div>';
+
+        html += '</div>';
+
+        if (gp.axes.length > 0) {
+          const lx = Math.abs(gp.axes[0] - 0.4961);
+          const lt = Math.abs(gp.axes[0] - 0.0945);
+          if (lx < 0.01) {
+            fish = 'Whale';
+          } else if (lt < 0.01) {
+            fish = 'Tuna';
+          }
+        }
+      }
+
+      fishbox.textContent = fish;
+      container.innerHTML = html;
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
