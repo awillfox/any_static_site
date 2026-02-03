@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Display</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+            color: black;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            display: flex;
+        }
+        
+        .history-panel {
+            width: 250px;
+            background-color: #f5f5f5;
+            border: 1px solid black;
+            padding: 15px;
+            text-align: left;
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .history-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        input {
+            font-size: 18px;
+            padding: 10px;
+            border: 1px solid black;
+            background-color: white;
+            color: black;
+            text-align: left;
+            width: 300px;
+            margin: 20px 0;
+        }
+        
+        #display {
+            font-size: 48px;
+            font-weight: bold;
+            color: black;
+            margin-top: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .clear-btn {
+            background-color: #66d9e8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="history-panel">
+        <div class="history-title">Press History</div>
+        <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+        <div id="historyList"></div>
+    </div>
+    
+    <div class="main-content">
+        <h1>Keyboard Key Display</h1>
+        <input type="text" id="keyInput" placeholder="Type here...">
+        <div id="display">-</div>
+    </div>
+
+    <script>
+        const input = document.getElementById('keyInput');
+        const display = document.getElementById('display');
+        const historyList = document.getElementById('historyList');
+        let pressHistory = [];
+        
+        function addToHistory(keyCombo) {
+            const timestamp = new Date().toLocaleTimeString();
+            pressHistory.unshift({
+                keys: keyCombo,
+                time: timestamp
+            });
+            
+            // Keep only last 50 entries
+            if (pressHistory.length > 50) {
+                pressHistory.pop();
+            }
+            
+            updateHistoryDisplay();
+        }
+        
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+            pressHistory.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<strong>${entry.keys}</strong><br><small>${entry.time}</small>`;
+                historyList.appendChild(div);
+            });
+        }
+        
+        function clearHistory() {
+            pressHistory = [];
+            updateHistoryDisplay();
+        }
+        
+        input.addEventListener('keydown', function(event) {
+            // Log all event properties for debugging
+            console.log('=== KEYDOWN EVENT ===');
+            console.log('event.key:', event.key);
+            console.log('event.code:', event.code);
+            console.log('event.keyCode:', event.keyCode);
+            console.log('event.which:', event.which);
+            console.log('event.location:', event.location);
+            console.log('event.repeat:', event.repeat);
+            console.log('event.ctrlKey:', event.ctrlKey);
+            console.log('event.altKey:', event.altKey);
+            console.log('event.shiftKey:', event.shiftKey);
+            console.log('event.metaKey:', event.metaKey);
+            console.log('event.type:', event.type);
+            console.log('event.target.value:', event.target.value);
+            console.log('event.timeStamp:', event.timeStamp);
+            console.log('event.bubbles:', event.bubbles);
+            console.log('event.cancelable:', event.cancelable);
+            console.log('event.defaultPrevented:', event.defaultPrevented);
+            console.log('event.composed:', event.composed);
+            console.log('event.isTrusted:', event.isTrusted);
+            console.log('Full event object:', event);
+            console.log('=====================');
+            
+            let keys = [];
+            if (event.ctrlKey) keys.push('CTRL');
+            if (event.altKey) keys.push('ALT');
+            if (event.shiftKey) keys.push('SHIFT');
+            
+            // Use event.code for more consistent results across browsers
+            let mainKey = event.code;
+            
+            // Clean up common codes
+            if (mainKey.startsWith('Key')) mainKey = mainKey.replace('Key', '');
+            if (mainKey.startsWith('Digit')) mainKey = mainKey.replace('Digit', '');
+            if (mainKey === 'Space') mainKey = 'SPACE';
+            
+            // Handle function keys - replace 'F' prefix with 'SNT'
+            if (mainKey.match(/^F\d+$/)) {
+                mainKey = 'SNT' + mainKey.substring(1); // Replace 'F' with 'SNT' and keep the number
+            }
+            
+            keys.push(mainKey);
+            const keyCombo = keys.join(' + ');
+            display.textContent = keyCombo;
+            
+            // Add to history
+            addToHistory(keyCombo);
+        });
+        
+        input.focus();
+    </script>
+</body>
+</html>
